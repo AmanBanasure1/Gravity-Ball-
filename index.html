@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Neon Gravity</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#03040d;color:#fff;font-family:Arial,sans-serif}
+body{touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
+#hud{position:fixed;inset:0;pointer-events:none}
+.top{display:flex;justify-content:space-between;padding:18px 20px;padding-top:max(18px,env(safe-area-inset-top));text-shadow:0 0 14px #61d7ff}
+.caption{font-size:10px;letter-spacing:3px;opacity:.65}.value{font-size:25px;font-weight:900}
+#combo{position:absolute;top:92px;left:50%;transform:translateX(-50%);font-size:14px;font-weight:900;letter-spacing:2px;opacity:0}
+#combo.on{opacity:1}
+#fever{position:absolute;top:118px;left:50%;transform:translateX(-50%);font-weight:900;letter-spacing:3px;color:#ffcf4d;text-shadow:0 0 18px #ff7b00;display:none}
+#message{position:absolute;top:45%;left:50%;transform:translate(-50%,-50%) scale(.7);font-weight:900;font-size:27px;opacity:0;text-shadow:0 0 20px currentColor;transition:.15s}
+#message.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#menu{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;background:radial-gradient(circle at 50% 45%,rgba(19,34,74,.75),rgba(2,3,12,.93) 65%);z-index:4}
+.card{width:min(88vw,390px);padding:30px 22px}
+.logo{font-size:45px;line-height:.88;letter-spacing:5px;font-weight:1000;text-shadow:0 0 12px #59d8ff,0 0 35px #247cff}
+.tag{margin:18px 0 26px;color:#a9b8d5;font-size:14px}
+button{border:0;border-radius:999px;padding:16px 48px;background:linear-gradient(90deg,#48c9ff,#9a67ff);color:white;font-weight:900;font-size:17px;box-shadow:0 0 28px rgba(78,178,255,.45);cursor:pointer}
+.bestline{margin-top:20px;font-size:12px;letter-spacing:2px;color:#8e9ab6}
+#tip{position:absolute;bottom:28px;left:0;width:100%;text-align:center;color:#9ba9c5;font-size:11px;letter-spacing:2px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud">
+  <div class="top">
+    <div><div class="caption">SCORE</div><div class="value" id="score">0</div></div>
+    <div style="text-align:right"><div class="caption">BEST</div><div class="value" id="best">0</div></div>
+  </div>
+  <div id="combo">COMBO ×<span id="comboNum">0</span></div>
+  <div id="fever">⚡ FEVER MODE ×2 ⚡</div>
+  <div id="message"></div>
+  <div id="tip">TAP ANYWHERE TO FLIP GRAVITY</div>
+</div>
+<div id="menu">
+  <div class="card">
+    <div class="logo">NEON<br>GRAVITY</div>
+    <div class="tag">Flip gravity. Dodge the gates.<br>Build the biggest score.</div>
+    <button id="play">PLAY</button>
+    <div class="bestline">BEST SCORE: <span id="menuBest">0</span></div>
+  </div>
+</div>
+
+<script>
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+let W=innerWidth,H=innerHeight,DPR=1,raf=0;
+let state='menu',score=0,best=Number(localStorage.getItem('ng_best')||0);
+let ball,blocks=[],bits=[],stars=[],last=0,spawnTimer=0,runTime=0,combo=0,fever=0;
+const $=id=>document.getElementById(id);
+$('best').textContent=best;$('menuBest').textContent=best;
+
+function resize(){
+ DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
+ canvas.width=W*DPR;canvas.height=H*DPR;canvas.style.width=W+'px';canvas.style.height=H+'px';
+ ctx.setTransform(DPR,0,0,DPR,0,0);
+ stars=Array.from({length:Math.floor(W/8)+35},()=>({x:Math.random()*W,y:Math.random()*H,r:.5+Math.random()*1.5,s:.2+Math.random()*1.1}));
+}
+addEventListener('resize',resize);resize();
+
+function reset(){
+ score=0;combo=0;fever=0;runTime=0;spawnTimer=1100;blocks=[];bits=[];
+ ball={x:W*.25,y:H*.5,r:12,vy:0,g:1,trail:[]};
+ $('score').textContent=0;$('combo').classList.remove('on');$('fever').style.display='none';
+}
+function begin(){
+ cancelAnimationFrame(raf);reset();state='play';$('menu').classList.add('hidden');
+ last=performance.now();raf=requestAnimationFrame(loop);
+}
+$('play').onclick=begin;
+
+function flip(){
+ if(state!=='play')return;
+ ball.g*=-1;
+ ball.vy=ball.g*2.5;
+ combo++;
+ score += fever>0?2:1;
+ $('score').textContent=score;
+ $('comboNum').textContent=combo;
+ $('combo').classList.toggle('on',combo>1);
+ burst(ball.x,ball.y,9,'#7ee7ff');
+ if(combo%8===0){
+   score+=12;$('score').textContent=score;
+   burst(ball.x,ball.y,35,'#ffd34d');flash('PERFECT! +12','#ffd34d');
+ }
+ if(combo>=12 && fever<=0){
+   fever=5000;$('fever').style.display='block';flash('FEVER MODE!','#ff8cff');
+ }
+}
+canvas.addEventListener('pointerdown',e=>{e.preventDefault();flip()},{passive:false});
+addEventListener('keydown',e=>{if(['Space','ArrowUp','ArrowDown'].includes(e.code)){e.preventDefault();flip()}});
+
+function flash(text,color){
+ const m=$('message');m.textContent=text;m.style.color=color;m.classList.add('show');
+ clearTimeout(m._t);m._t=setTimeout(()=>m.classList.remove('show'),500);
+}
+function burst(x,y,n,color){
+ for(let i=0;i<n;i++){
+  const a=Math.random()*Math.PI*2,s=1+Math.random()*5;
+  bits.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:350+Math.random()*400,max:750,r:1+Math.random()*3,color});
+ }
+}
+
+function makeGate(){
+ const gap=Math.max(155,235-score*.10);
+ const minY=100,maxY=H-100-gap;
+ const gapY=minY+Math.random()*Math.max(1,maxY-minY);
+ const x=W+45;
+ blocks.push({x,y:0,w:34,h:gapY,color:'#5b70ff',passed:false});
+ blocks.push({x,y:gapY+gap,w:34,h:H-(gapY+gap),color:'#b15cff',passed:false});
+ // Decorative center ring tells player where to pass
+ blocks.push({x:x-12,y:gapY+gap/2-2,w:58,h:4,color:'#8eeaff',ring:true,passed:true});
+}
+
+function rectHitCircle(r){
+ const nx=Math.max(r.x,Math.min(ball.x,r.x+r.w));
+ const ny=Math.max(r.y,Math.min(ball.y,r.y+r.h));
+ const dx=ball.x-nx,dy=ball.y-ny;
+ return dx*dx+dy*dy<ball.r*ball.r;
+}
+
+function endGame(){
+ if(state!=='play')return;
+ state='over';
+ best=Math.max(best,score);localStorage.setItem('ng_best',best);
+ $('best').textContent=best;
+ burst(ball.x,ball.y,65,'#ff5d8f');
+ setTimeout(()=>{
+   $('menu').classList.remove('hidden');
+   $('menuBest').textContent=best;
+   document.querySelector('.logo').innerHTML='GAME<br>OVER';
+   document.querySelector('.tag').innerHTML='Score: <b>'+score+'</b><br>Can you beat your best?';
+   $('play').textContent='PLAY AGAIN';
+ },250);
+}
+
+function update(dt){
+ runTime+=dt;
+ stars.forEach(s=>{s.x-=s.s*dt*.035;if(s.x<-3)s.x=W+3});
+ const speed=(.24+Math.min(.32,score*.0018))*dt;
+ ball.vy+=ball.g*.0065*dt;
+ ball.vy=Math.max(-6,Math.min(6,ball.vy));
+ ball.y+=ball.vy*dt*.18;
+ // soft bounds, no instant death
+ if(ball.y<ball.r){ball.y=ball.r;ball.vy=Math.abs(ball.vy)*.2}
+ if(ball.y>H-ball.r){ball.y=H-ball.r;ball.vy=-Math.abs(ball.vy)*.2}
+ ball.trail.push({x:ball.x,y:ball.y,a:1});
+ if(ball.trail.length>18)ball.trail.shift();
+
+ spawnTimer-=dt;
+ if(spawnTimer<=0){
+   makeGate();
+   spawnTimer=Math.max(850,1450-score*2.5);
+ }
+ for(const b of blocks){
+   b.x-=speed;
+   if(!b.passed&&!b.ring&&b.x+b.w<ball.x){
+     b.passed=true;score+=fever>0?2:1;$('score').textContent=score;
+   }
+   if(!b.ring&&rectHitCircle(b)){endGame();return}
+ }
+ blocks=blocks.filter(b=>b.x>-80);
+
+ if(fever>0){fever-=dt;if(fever<=0)$('fever').style.display='none'}
+ for(const p of bits){p.x+=p.vx*dt*.06;p.y+=p.vy*dt*.06;p.vy+=.002*dt;p.life-=dt}
+ bits=bits.filter(p=>p.life>0);
+}
+
+function draw(){
+ ctx.clearRect(0,0,W,H);
+ const bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#050a20');bg.addColorStop(.5,'#0b1230');bg.addColorStop(1,'#02030b');
+ ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+ // grid
+ ctx.save();ctx.globalAlpha=.12;ctx.strokeStyle='#6aa9ff';ctx.lineWidth=1;
+ const off=(performance.now()*.02)%40;
+ for(let y=-40+off;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+ for(let xx=off;xx<W;xx+=40){ctx.beginPath();ctx.moveTo(xx,0);ctx.lineTo(xx,H);ctx.stroke()}
+ ctx.restore();
+ stars.forEach(s=>{ctx.globalAlpha=.3+s.r*.15;ctx.fillStyle='#b7d8ff';ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill()});
+ // gates
+ for(const b of blocks){
+   ctx.save();
+   ctx.shadowBlur=b.ring?14:24;ctx.shadowColor=b.color;ctx.fillStyle=b.color;
+   if(b.ring){
+     ctx.fillRect(b.x,b.y,b.w,b.h);
+   }else{
+     ctx.fillRect(b.x,b.y,b.w,b.h);
+     ctx.globalAlpha=.35;ctx.fillStyle='#fff';ctx.fillRect(b.x+5,b.y,3,b.h);
+   }
+   ctx.restore();
+ }
+ // center guide / lane line
+ ctx.save();ctx.globalAlpha=.15;ctx.setLineDash([8,12]);ctx.strokeStyle='#8eeaff';ctx.beginPath();ctx.moveTo(ball.x+30,0);ctx.lineTo(ball.x+30,H);ctx.stroke();ctx.restore();
+ // ball trail
+ if(ball){
+   ball.trail.forEach((t,i)=>{
+     const a=i/ball.trail.length*.35;ctx.globalAlpha=a;ctx.fillStyle='#65dcff';
+     ctx.beginPath();ctx.arc(t.x,t.y,ball.r*(.35+i/ball.trail.length*.5),0,Math.PI*2);ctx.fill()
+   });
+   ctx.globalAlpha=1;ctx.save();ctx.shadowBlur=35;ctx.shadowColor=fever>0?'#ff67d9':'#5ce0ff';
+   const g=ctx.createRadialGradient(ball.x-3,ball.y-3,1,ball.x,ball.y,ball.r*2.8);
+   g.addColorStop(0,'#fff');g.addColorStop(.25,fever>0?'#ffb2ef':'#bdf6ff');g.addColorStop(1,'rgba(80,150,255,0)');
+   ctx.fillStyle=g;ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r*2.8,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);ctx.fill();ctx.restore();
+ }
+ bits.forEach(p=>{ctx.globalAlpha=Math.max(0,p.life/p.max);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill()});ctx.globalAlpha=1;
+}
+
+function loop(t){
+ if(state!=='play')return;
+ const dt=Math.min(32,t-last);last=t;update(dt);draw();
+ if(state==='play')raf=requestAnimationFrame(loop);
+}
+draw();
+</script>
+</body>
+</html>
