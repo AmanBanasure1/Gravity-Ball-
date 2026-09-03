@@ -1,18 +1,17 @@
 {
   "name": "Neon Gravity",
   "short_name": "Gravity Ball",
-  "description": "Flip gravity, dodge neon gates and beat your high score.",
   "id": "/Gravity-Ball-/",
   "start_url": "/Gravity-Ball-/",
   "scope": "/Gravity-Ball-/",
   "display": "standalone",
   "orientation": "portrait",
+  "description": "Flip gravity, dodge neon gates and beat your high score.",
   "background_color": "#03040d",
   "theme_color": "#050a20",
   "lang": "en",
   "dir": "ltr",
   "categories": ["games", "arcade"],
-  "prefer_related_applications": false,
   "icons": [
     {
       "src": "icon-192.png",
