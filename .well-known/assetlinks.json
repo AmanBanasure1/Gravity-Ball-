@@ -1,0 +1,9 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.amanbanasure1.twa",
+        "sha256_cert_fingerprints": ["2E:92:B3:7A:F3:6F:43:0E:D3:71:34:19:CA:B6:C2:50:21:BD:03:E4:B6:1D:52:74:15:16:D7:52:DA:CE:2E:F0"]
+      }
+    }]
+
