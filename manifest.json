@@ -28,21 +28,21 @@
   ],
   "screenshots": [
   {
-    "src": "s-sta.jpg",
-    "sizes": "1080x1920",
-    "type": "image/jpg",
+    "src": "s-sta.jpeg",
+    "sizes": "1080x1919",
+    "type": "image/jpeg",
     "form_factor": "narrow"
   },
       {
-    "src": "./game.jpg",
-    "sizes": "1080x1920",
-    "type": "image/jpg",
+    "src": "./game.jpeg",
+    "sizes": "1080x1919",
+    "type": "image/jpeg",
     "form_factor": "narrow"
       },
       {
-    "src": "./s-over.jpg",
-    "sizes": "1080x1920",
-    "type": "image/jpg",
+    "src": "./s-over.jpeg",
+    "sizes": "1080x1919",
+    "type": "image/jpeg",
     "form_factor": "narrow"
       }
   ]
