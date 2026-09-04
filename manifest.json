@@ -29,19 +29,19 @@
   "screenshots": [
   {
     "src": "s-sta.jpeg",
-    "sizes": "1080x1919",
+    "sizes": "1080x1920",
     "type": "image/jpeg",
     "form_factor": "narrow"
   },
       {
     "src": "./game.jpeg",
-    "sizes": "1080x1919",
+    "sizes": "1080x1920",
     "type": "image/jpeg",
     "form_factor": "narrow"
       },
       {
     "src": "./s-over.jpeg",
-    "sizes": "1080x1919",
+    "sizes": "1080x1920",
     "type": "image/jpeg",
     "form_factor": "narrow"
       }
