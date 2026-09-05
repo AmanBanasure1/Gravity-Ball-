@@ -4,7 +4,7 @@
   "id": "/Gravity-Ball-/",
   "start_url": "/Gravity-Ball-/",
   "scope": "/Gravity-Ball-/",
-  "display": "standalone",
+  "display": "fullscreen",
   "orientation": "portrait",
   "description": "Flip gravity, dodge neon gates and beat your high score.",
   "background_color": "#03040d",
