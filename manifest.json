@@ -3,6 +3,7 @@
   "short_name": "Gravity Ball",
   "id": "/Gravity-Ball-/",
   "start_url": "/Gravity-Ball-/",
+  "package_name": "io.github.amanbanasure1.twa"
   "scope": "/Gravity-Ball-/",
   "display": "standalone",
   "orientation": "portrait",
