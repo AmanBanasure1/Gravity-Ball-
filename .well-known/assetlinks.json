@@ -1,9 +1,14 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "io.github.amanbanasure1.twa",
-        "sha256_cert_fingerprints": ["2E:92:B3:7A:F3:6F:43:0E:D3:71:34:19:CA:B6:C2:50:21:BD:03:E4:B6:1D:52:74:15:16:D7:52:DA:CE:2E:F0"]
-      }
-    }]
-
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.amanbanasure1.twa",
+      "sha256_cert_fingerprints": [
+        "9E:C3:A6:E7:17:3A:6C:1B:6A:45:8C:79:00:40:5D:87:CC:B2:0F:BA:23:E4:A3:59:44:9A:86:51:AD:45:22:AA"
+      ]
+    }
+  }
+]
